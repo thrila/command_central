@@ -1,0 +1,32 @@
+# Rust build artifacts
+/target/
+**/*.rs.bk
+*.pdb
+
+# Cargo lock file — keep for binaries, ignore only if this is a library
+# (uncomment the next line if this crate is a library, not an app)
+# Cargo.lock
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Local runtime data
+tasks.db
+tasks.db-journal
+tasks.db-wal
+tasks.db-shm
+
+# Nmap binary you built locally — don't commit compiled tools
+nmap
+nmap-data/
+
+# Editor/IDE
+.vscode/
+.idea/
+*.swp
+
+# OS cruft
+.DS_Store
+Thumbs.db
