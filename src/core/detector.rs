@@ -93,7 +93,11 @@ fn which(name: &str) -> Option<String> {
         .filter(|o| o.status.success())
         .and_then(|o| {
             let s = String::from_utf8_lossy(&o.stdout).trim().to_string();
-            if s.is_empty() { None } else { Some(s) }
+            if s.is_empty() {
+                None
+            } else {
+                Some(s)
+            }
         })
 }
 
@@ -120,16 +124,16 @@ fn get_version(name: &str, path: &str) -> Option<String> {
         _ => &["--version"],
     };
 
-    Command::new(path)
-        .args(flags)
-        .output()
-        .ok()
-        .and_then(|o| {
-            let out = String::from_utf8_lossy(&o.stdout).to_string()
-                + &String::from_utf8_lossy(&o.stderr);
-            let first = out.lines().next().unwrap_or("").trim().to_string();
-            if first.is_empty() { None } else { Some(first) }
-        })
+    Command::new(path).args(flags).output().ok().and_then(|o| {
+        let out =
+            String::from_utf8_lossy(&o.stdout).to_string() + &String::from_utf8_lossy(&o.stderr);
+        let first = out.lines().next().unwrap_or("").trim().to_string();
+        if first.is_empty() {
+            None
+        } else {
+            Some(first)
+        }
+    })
 }
 
 fn check_common_locations(name: &str) -> Option<String> {

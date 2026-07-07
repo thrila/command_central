@@ -61,8 +61,7 @@ pub fn find_process(name: &str) -> String {
             let matches: Vec<&str> = stdout
                 .lines()
                 .filter(|line| {
-                    line.to_lowercase().contains(&name.to_lowercase())
-                        && !line.contains("grep")
+                    line.to_lowercase().contains(&name.to_lowercase()) && !line.contains("grep")
                 })
                 .take(10)
                 .collect();

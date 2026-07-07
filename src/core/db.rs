@@ -53,7 +53,9 @@ impl Database {
     }
 
     pub fn delete_task(&self, id: i64) -> Result<bool> {
-        let affected = self.conn.execute("DELETE FROM tasks WHERE id = ?1", params![id])?;
+        let affected = self
+            .conn
+            .execute("DELETE FROM tasks WHERE id = ?1", params![id])?;
         Ok(affected > 0)
     }
 
@@ -80,9 +82,9 @@ impl Database {
     }
 
     pub fn get_task(&self, id: i64) -> Result<Option<(i64, String, String, Option<String>)>> {
-        let mut stmt = self.conn.prepare(
-            "SELECT id, kind, status, output FROM tasks WHERE id = ?1",
-        )?;
+        let mut stmt = self
+            .conn
+            .prepare("SELECT id, kind, status, output FROM tasks WHERE id = ?1")?;
         let row = stmt
             .query_map(params![id], |row| {
                 Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?))
@@ -93,9 +95,9 @@ impl Database {
     }
 
     pub fn get_history(&self, limit: i64) -> Result<Vec<(i64, String, String, Option<String>)>> {
-        let mut stmt = self.conn.prepare(
-            "SELECT id, kind, status, output FROM tasks ORDER BY id DESC LIMIT ?1",
-        )?;
+        let mut stmt = self
+            .conn
+            .prepare("SELECT id, kind, status, output FROM tasks ORDER BY id DESC LIMIT ?1")?;
         let rows = stmt
             .query_map(params![limit], |row| {
                 Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?))
@@ -125,13 +127,11 @@ impl Database {
     }
 
     pub fn get_agent_history(&self, limit: i64) -> Result<Vec<(String, String)>> {
-        let mut stmt = self.conn.prepare(
-            "SELECT role, content FROM agent_log ORDER BY id DESC LIMIT ?1",
-        )?;
+        let mut stmt = self
+            .conn
+            .prepare("SELECT role, content FROM agent_log ORDER BY id DESC LIMIT ?1")?;
         let rows = stmt
-            .query_map(params![limit], |row| {
-                Ok((row.get(0)?, row.get(1)?))
-            })?
+            .query_map(params![limit], |row| Ok((row.get(0)?, row.get(1)?)))?
             .filter_map(Result::ok)
             .collect();
         Ok(rows)

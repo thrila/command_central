@@ -11,7 +11,10 @@ mod tests {
 
         for tool in &tools {
             assert!(!tool.name.is_empty(), "Tool name must not be empty");
-            assert!(!tool.description.is_empty(), "Tool description must not be empty");
+            assert!(
+                !tool.description.is_empty(),
+                "Tool description must not be empty"
+            );
         }
 
         let names: Vec<&str> = tools.iter().map(|t| t.name.as_str()).collect();
@@ -20,7 +23,10 @@ mod tests {
         assert!(names.contains(&"write_file"), "Must have write_file tool");
         assert!(names.contains(&"grep_search"), "Must have grep_search tool");
         assert!(names.contains(&"system_info"), "Must have system_info tool");
-        assert!(names.contains(&"list_directory"), "Must have list_directory tool");
+        assert!(
+            names.contains(&"list_directory"),
+            "Must have list_directory tool"
+        );
         assert!(names.contains(&"web_fetch"), "Must have web_fetch tool");
         assert!(names.contains(&"web_search"), "Must have web_search tool");
     }
@@ -110,7 +116,10 @@ mod tests {
     fn test_approval_gate_check_returns_some_when_not_approved() {
         let gate = ApprovalGate::new();
         let result = gate.check("shell", "rm -rf /", "shell command");
-        assert!(result.is_some(), "Should require approval for unapproved destructive tool");
+        assert!(
+            result.is_some(),
+            "Should require approval for unapproved destructive tool"
+        );
     }
 
     #[test]
@@ -133,8 +142,18 @@ mod tests {
         assert!(config.paths.atomic_repo.is_some());
         assert!(config.paths.opencode_bin.is_some());
         let home = std::env::var("HOME").unwrap_or_else(|_| "/home/user".to_string());
-        assert!(config.paths.atomic_repo.as_deref().unwrap_or("").contains(&home));
-        assert!(config.paths.opencode_bin.as_deref().unwrap_or("").contains(&home));
+        assert!(config
+            .paths
+            .atomic_repo
+            .as_deref()
+            .unwrap_or("")
+            .contains(&home));
+        assert!(config
+            .paths
+            .opencode_bin
+            .as_deref()
+            .unwrap_or("")
+            .contains(&home));
     }
 
     #[test]
@@ -142,15 +161,24 @@ mod tests {
         let config = Config::default();
         let report = config.format_report();
         assert!(report.contains("LLM"), "report should contain LLM section");
-        assert!(report.contains("Discord"), "report should contain Discord section");
+        assert!(
+            report.contains("Discord"),
+            "report should contain Discord section"
+        );
     }
 
     #[test]
     fn test_tool_definition_mcp_fields_default_none() {
         let tools = get_builtin_tool_definitions();
         for tool in &tools {
-            assert!(tool.mcp_server.is_none(), "Built-in tools should have no mcp_server");
-            assert!(tool.mcp_tool.is_none(), "Built-in tools should have no mcp_tool");
+            assert!(
+                tool.mcp_server.is_none(),
+                "Built-in tools should have no mcp_server"
+            );
+            assert!(
+                tool.mcp_tool.is_none(),
+                "Built-in tools should have no mcp_tool"
+            );
         }
     }
 

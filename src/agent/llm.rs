@@ -2,9 +2,9 @@ use super::gate::{ApprovalGate, ToolCategory};
 use super::tools::{execute_builtin_tool, get_builtin_tool_definitions, ToolDefinition};
 use crate::core::mcp::McpClient;
 use anyhow::Result;
-use std::sync::Arc;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use std::sync::Arc;
 use tokio::sync::watch;
 
 #[derive(Debug, Clone)]
@@ -40,11 +40,22 @@ pub struct Message {
 #[derive(Debug, Clone)]
 pub enum ProgressEvent {
     Thinking(String),
-    ToolStart { name: String, args: String },
-    ToolEnd { name: String, success: bool, summary: String },
+    ToolStart {
+        name: String,
+        args: String,
+    },
+    ToolEnd {
+        name: String,
+        success: bool,
+        summary: String,
+    },
     Completed(String),
     Error(String),
-    ApprovalNeeded { tool: String, args: String, message: String },
+    ApprovalNeeded {
+        tool: String,
+        args: String,
+        message: String,
+    },
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -218,7 +229,11 @@ pub async fn chat_with_agent(
                 execute_dynamic_tool(&tc.function.name, &args, mcp_clients, cancel_rx.as_ref())
                     .await;
             let summary = if result.output.len() > 300 {
-                format!("{}... ({} chars)", &result.output[..300], result.output.len())
+                format!(
+                    "{}... ({} chars)",
+                    &result.output[..300],
+                    result.output.len()
+                )
             } else {
                 result.output.clone()
             };
@@ -294,7 +309,9 @@ pub async fn chat_with_agent(
 
         if let Some(ref tx) = progress_tx {
             let _ = tx.send(ProgressEvent::Completed(content.clone()));
-            let _ = tx.send(ProgressEvent::Completed("[DONE] Task complete.".to_string()));
+            let _ = tx.send(ProgressEvent::Completed(
+                "[DONE] Task complete.".to_string(),
+            ));
         }
 
         Ok(content)
@@ -341,8 +358,12 @@ async fn execute_dynamic_tool(
             let defs = client.tool_definitions();
             if defs.iter().any(|t| t.name == name) {
                 if let (Some(server_name), Some(tool_name)) = (
-                    defs.iter().find(|t| t.name == name).and_then(|t| t.mcp_server.clone()),
-                    defs.iter().find(|t| t.name == name).and_then(|t| t.mcp_tool.clone()),
+                    defs.iter()
+                        .find(|t| t.name == name)
+                        .and_then(|t| t.mcp_server.clone()),
+                    defs.iter()
+                        .find(|t| t.name == name)
+                        .and_then(|t| t.mcp_tool.clone()),
                 ) {
                     if client.name == server_name {
                         match client.call_tool(&tool_name, args.clone()) {

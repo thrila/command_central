@@ -1,5 +1,5 @@
-use crate::agent::llm::LlmConfig;
 use crate::agent::chat::AgentChat;
+use crate::agent::llm::LlmConfig;
 use crate::core::mcp::McpClient;
 use crate::core::task::Task;
 use crate::utils::shell;
@@ -38,15 +38,30 @@ struct App {
 impl App {
     fn new(mcp_clients: Vec<Arc<McpClient>>, http_client: reqwest::Client) -> Self {
         let mut lines: Vec<(String, Color)> = vec![
-            ("Command Central — Agent Terminal".to_string(), Color::Yellow),
-            ("Type a message to ask the AI agent, or use !<command> to run shell.".to_string(), Color::Gray),
-            ("Press Ctrl+C to cancel an in-progress agent call.".to_string(), Color::Gray),
+            (
+                "Command Central — Agent Terminal".to_string(),
+                Color::Yellow,
+            ),
+            (
+                "Type a message to ask the AI agent, or use !<command> to run shell.".to_string(),
+                Color::Gray,
+            ),
+            (
+                "Press Ctrl+C to cancel an in-progress agent call.".to_string(),
+                Color::Gray,
+            ),
             (String::new(), Color::Reset),
         ];
         let config = LlmConfig::from_env();
         if !config.is_configured() {
-            lines.push(("[!] LLM not configured — set LLM_API_KEY in .env for AI agent".to_string(), Color::Red));
-            lines.push(("[!] Start with ! to run shell commands directly".to_string(), Color::Red));
+            lines.push((
+                "[!] LLM not configured — set LLM_API_KEY in .env for AI agent".to_string(),
+                Color::Red,
+            ));
+            lines.push((
+                "[!] Start with ! to run shell commands directly".to_string(),
+                Color::Red,
+            ));
             lines.push((String::new(), Color::Reset));
         }
         Self {
@@ -100,7 +115,9 @@ pub async fn run_tui(tx: mpsc::Sender<Task>) -> anyhow::Result<()> {
             if let Event::Key(key) = event::read()? {
                 if key.kind == KeyEventKind::Press {
                     if key.code == KeyCode::Char('c')
-                        && key.modifiers.contains(crossterm::event::KeyModifiers::CONTROL)
+                        && key
+                            .modifiers
+                            .contains(crossterm::event::KeyModifiers::CONTROL)
                     {
                         app.add_output("^C — cancelled.".to_string(), Color::Yellow);
                         app.agent_busy = false;
@@ -108,7 +125,9 @@ pub async fn run_tui(tx: mpsc::Sender<Task>) -> anyhow::Result<()> {
                     }
 
                     match key.code {
-                        KeyCode::Char('q') if app.input_mode == InputMode::Normal && !app.agent_busy => {
+                        KeyCode::Char('q')
+                            if app.input_mode == InputMode::Normal && !app.agent_busy =>
+                        {
                             break;
                         }
                         KeyCode::Char('i') if app.input_mode == InputMode::Normal => {
@@ -117,7 +136,9 @@ pub async fn run_tui(tx: mpsc::Sender<Task>) -> anyhow::Result<()> {
                         KeyCode::Esc => {
                             app.input_mode = InputMode::Normal;
                         }
-                        KeyCode::Enter if app.input_mode == InputMode::Insert && !app.agent_busy => {
+                        KeyCode::Enter
+                            if app.input_mode == InputMode::Insert && !app.agent_busy =>
+                        {
                             let input = app.input.clone();
                             app.input.clear();
                             if !input.trim().is_empty() {
@@ -128,17 +149,22 @@ pub async fn run_tui(tx: mpsc::Sender<Task>) -> anyhow::Result<()> {
                                 let input_owned = input.trim().to_string();
                                 let http = app.http_client.clone();
                                 tokio::spawn(async move {
-                                    let result = process_input(&input_owned, &tx_clone, &http).await;
+                                    let result =
+                                        process_input(&input_owned, &tx_clone, &http).await;
                                     let _ = event_tx_clone.send(result);
                                     let _ = event_tx_clone.send(String::new());
                                     let _ = event_tx_clone.send("__CLEAR_BUSY__".to_string());
                                 });
                             }
                         }
-                        KeyCode::Char(c) if app.input_mode == InputMode::Insert && !app.agent_busy => {
+                        KeyCode::Char(c)
+                            if app.input_mode == InputMode::Insert && !app.agent_busy =>
+                        {
                             app.input.push(c);
                         }
-                        KeyCode::Backspace if app.input_mode == InputMode::Insert && !app.agent_busy => {
+                        KeyCode::Backspace
+                            if app.input_mode == InputMode::Insert && !app.agent_busy =>
+                        {
                             app.input.pop();
                         }
                         KeyCode::PageUp | KeyCode::Up => {
@@ -182,9 +208,7 @@ fn ui(f: &mut Frame, app: &App) {
         .rev()
         .skip(visible_start)
         .take(max_visible)
-        .map(|(line, color)| {
-            ListItem::new(line.as_str()).style(Style::default().fg(*color))
-        })
+        .map(|(line, color)| ListItem::new(line.as_str()).style(Style::default().fg(*color)))
         .collect();
 
     let title = if app.agent_busy {
@@ -217,13 +241,16 @@ fn ui(f: &mut Frame, app: &App) {
     };
 
     let input = Paragraph::new(app.input.as_str())
-        .block(Block::default().borders(Borders::ALL).title(title).style(
-            if app.agent_busy {
-                Style::default().fg(Color::Yellow)
-            } else {
-                Style::default()
-            },
-        ))
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .title(title)
+                .style(if app.agent_busy {
+                    Style::default().fg(Color::Yellow)
+                } else {
+                    Style::default()
+                }),
+        )
         .style(input_style);
     f.render_widget(input, chunks[1]);
 
@@ -234,7 +261,11 @@ fn ui(f: &mut Frame, app: &App) {
     }
 }
 
-async fn process_input(input: &str, _tx: &mpsc::Sender<Task>, http_client: &reqwest::Client) -> String {
+async fn process_input(
+    input: &str,
+    _tx: &mpsc::Sender<Task>,
+    http_client: &reqwest::Client,
+) -> String {
     if input.starts_with('!') {
         let cmd = &input[1..];
         match shell::run_shell(cmd) {
@@ -259,15 +290,11 @@ async fn process_input(input: &str, _tx: &mpsc::Sender<Task>, http_client: &reqw
     } else {
         let config = LlmConfig::from_env();
         if !config.is_configured() {
-            return "LLM not configured. Use !<command> to run shell, or set LLM_API_KEY in .env".to_string();
+            return "LLM not configured. Use !<command> to run shell, or set LLM_API_KEY in .env"
+                .to_string();
         }
         let mcp_clients: Vec<Arc<McpClient>> = vec![];
-        let mut chat = AgentChat::new(
-            config,
-            mcp_clients,
-            http_client.clone(),
-            None,
-        );
+        let mut chat = AgentChat::new(config, mcp_clients, http_client.clone(), None);
         chat.send_message(input).await
     }
 }

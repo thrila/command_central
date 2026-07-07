@@ -129,7 +129,10 @@ impl ApprovalGate {
         if let Some(ref h) = *handler {
             match h(tool_name, args, description) {
                 ApprovalDecision::Allow | ApprovalDecision::AllowAll(_) => {
-                    self.approved_tools.lock().unwrap().insert(tool_name.to_string());
+                    self.approved_tools
+                        .lock()
+                        .unwrap()
+                        .insert(tool_name.to_string());
                     None
                 }
                 ApprovalDecision::Deny(reason) => Some(reason),

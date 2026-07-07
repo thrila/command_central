@@ -88,9 +88,7 @@ pub fn spawn_worker(
                 Task::Nmap(target) => {
                     let label = format!("nmap:{target}");
                     if let Ok(id) = db.insert_task(&label) {
-                        let result = ProcessCommand::new("nmap")
-                            .args(["-sV", &target])
-                            .output();
+                        let result = ProcessCommand::new("nmap").args(["-sV", &target]).output();
                         match result {
                             Ok(o) => {
                                 let out = String::from_utf8_lossy(&o.stdout).to_string();
@@ -127,7 +125,11 @@ pub fn spawn_worker(
                                 let _ = db.update_task_status(id, "ok", Some(&body));
                             }
                             Ok(status) => {
-                                let _ = db.update_task_status(id, "failed", Some(&format!("exit: {:?}", status.code())));
+                                let _ = db.update_task_status(
+                                    id,
+                                    "failed",
+                                    Some(&format!("exit: {:?}", status.code())),
+                                );
                             }
                             Err(e) => {
                                 let _ = db.update_task_status(id, "error", Some(&e.to_string()));
@@ -139,10 +141,15 @@ pub fn spawn_worker(
                 Task::Workon(task) => {
                     let label = format!("workon:{}", &task[..task.len().min(50)]);
                     if let Ok(id) = db.insert_task(&label) {
-                        let atomic_path = config.paths.atomic_repo.clone()
+                        let atomic_path = config
+                            .paths
+                            .atomic_repo
+                            .clone()
                             .unwrap_or_else(|| "/home/david/Atomic".to_string());
-                        let opencode_bin = config.paths.opencode_bin.clone()
-                            .unwrap_or_else(|| "/home/david/.opencode/bin/opencode".to_string());
+                        let opencode_bin =
+                            config.paths.opencode_bin.clone().unwrap_or_else(|| {
+                                "/home/david/.opencode/bin/opencode".to_string()
+                            });
                         let result = ProcessCommand::new(&opencode_bin)
                             .args(["run", &task])
                             .current_dir(&atomic_path)
@@ -228,19 +235,17 @@ pub fn spawn_worker(
                     );
                 }
 
-                Task::RetryTask(id) => {
-                    match db.retry_task(id) {
-                        Ok(Some(new_id)) => {
-                            println!("Task {id} retried as task {new_id}.");
-                        }
-                        Ok(None) => {
-                            println!("Task {id} not found or cannot be retried.");
-                        }
-                        Err(e) => {
-                            println!("Error retrying task {id}: {e}");
-                        }
+                Task::RetryTask(id) => match db.retry_task(id) {
+                    Ok(Some(new_id)) => {
+                        println!("Task {id} retried as task {new_id}.");
                     }
-                }
+                    Ok(None) => {
+                        println!("Task {id} not found or cannot be retried.");
+                    }
+                    Err(e) => {
+                        println!("Error retrying task {id}: {e}");
+                    }
+                },
 
                 Task::History(resp_tx) => {
                     let rows = db

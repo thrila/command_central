@@ -42,7 +42,9 @@ pub async fn run_repl(tx: mpsc::Sender<Task>) -> anyhow::Result<()> {
             continue;
         }
 
-        let (cmd, rest) = input.split_once(char::is_whitespace).unwrap_or((&input, ""));
+        let (cmd, rest) = input
+            .split_once(char::is_whitespace)
+            .unwrap_or((&input, ""));
 
         match cmd {
             "exit" | "quit" => {

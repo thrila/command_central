@@ -72,7 +72,9 @@ pub struct McpSection {
 
 impl Default for McpSection {
     fn default() -> Self {
-        Self { servers: Vec::new() }
+        Self {
+            servers: Vec::new(),
+        }
     }
 }
 
@@ -161,10 +163,21 @@ impl Config {
 
     pub fn get_llm_config(&self) -> crate::agent::llm::LlmConfig {
         crate::agent::llm::LlmConfig {
-            provider: self.llm.provider.clone().unwrap_or_else(|| "openai".to_string()),
+            provider: self
+                .llm
+                .provider
+                .clone()
+                .unwrap_or_else(|| "openai".to_string()),
             api_key: self.llm.api_key.clone().unwrap_or_default(),
-            model: self.llm.model.clone().unwrap_or_else(|| "gpt-4".to_string()),
-            base_url: self.llm.base_url.clone()
+            model: self
+                .llm
+                .model
+                .clone()
+                .unwrap_or_else(|| "gpt-4".to_string()),
+            base_url: self
+                .llm
+                .base_url
+                .clone()
                 .unwrap_or_else(|| "https://api.openai.com/v1".to_string()),
         }
     }
@@ -175,11 +188,19 @@ impl Config {
             "LLM: {} / {} / {}\n",
             self.llm.provider.as_deref().unwrap_or("?"),
             self.llm.model.as_deref().unwrap_or("?"),
-            if self.llm.api_key.is_some() { "key set ✓" } else { "no key ✗" }
+            if self.llm.api_key.is_some() {
+                "key set ✓"
+            } else {
+                "no key ✗"
+            }
         ));
         r.push_str(&format!(
             "Discord: {}",
-            if self.discord.token.is_some() { "connected ✓" } else { "not set ✗" }
+            if self.discord.token.is_some() {
+                "connected ✓"
+            } else {
+                "not set ✗"
+            }
         ));
         if let Some(ref cid) = self.discord.channel_id {
             r.push_str(&format!(" (channel: {cid})"));
@@ -213,10 +234,15 @@ fn parse_mcp_env(val: &str) -> McpSection {
     let mut servers = Vec::new();
     for entry in val.split(';') {
         let entry = entry.trim();
-        if entry.is_empty() { continue; }
+        if entry.is_empty() {
+            continue;
+        }
         let parts: Vec<&str> = entry.splitn(3, '|').collect();
-        if parts.len() < 2 { continue; }
-        let args: Vec<String> = parts.get(2)
+        if parts.len() < 2 {
+            continue;
+        }
+        let args: Vec<String> = parts
+            .get(2)
             .unwrap_or(&"")
             .split(',')
             .filter(|s| !s.is_empty())

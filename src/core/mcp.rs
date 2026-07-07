@@ -93,9 +93,8 @@ impl McpClient {
             .spawn()?;
 
         let stdout = child.stdout.take().ok_or_else(|| anyhow!("No stdout"))?;
-        let stdin: Box<dyn Write + Send + Sync> = Box::new(
-            child.stdin.take().ok_or_else(|| anyhow!("No stdin"))?,
-        );
+        let stdin: Box<dyn Write + Send + Sync> =
+            Box::new(child.stdin.take().ok_or_else(|| anyhow!("No stdin"))?);
 
         let (reader_tx, reader_rx) = tokio::sync::mpsc::channel::<String>(256);
 

@@ -2,9 +2,9 @@ mod agent;
 mod cli;
 mod core;
 mod discord;
-mod utils;
 #[cfg(test)]
 mod tests;
+mod utils;
 
 use clap::{Parser, Subcommand};
 use core::config::Config;
@@ -16,7 +16,11 @@ use std::sync::Arc;
 use tokio::sync::mpsc;
 
 #[derive(Parser)]
-#[command(name = "command_central", version, about = "Coding & utility agent command terminal")]
+#[command(
+    name = "command_central",
+    version,
+    about = "Coding & utility agent command terminal"
+)]
 struct Cli {
     #[command(subcommand)]
     command: Option<Commands>,
@@ -25,13 +29,9 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     /// Run a shell command
-    Shell {
-        command: String,
-    },
+    Shell { command: String },
     /// Ask the AI agent
-    Ask {
-        query: String,
-    },
+    Ask { query: String },
     /// Launch the interactive TUI
     Tui,
     /// Launch the REPL
@@ -52,14 +52,9 @@ enum ConfigAction {
     /// Show current config
     Show,
     /// Set a config value: llm.api_key sk-..., discord.token ..., mcp.add name|cmd|args
-    Set {
-        key: String,
-        value: String,
-    },
+    Set { key: String, value: String },
     /// Remove an MCP server
-    McpRemove {
-        name: String,
-    },
+    McpRemove { name: String },
     /// Open config file in editor
     Edit,
 }
@@ -87,8 +82,12 @@ async fn main() -> anyhow::Result<()> {
             println!("Running: {command}");
             match crate::utils::shell::run_shell(&command) {
                 Ok((stdout, stderr, status)) => {
-                    if !stdout.is_empty() { println!("{stdout}"); }
-                    if !stderr.is_empty() { eprintln!("{stderr}"); }
+                    if !stdout.is_empty() {
+                        println!("{stdout}");
+                    }
+                    if !stderr.is_empty() {
+                        eprintln!("{stderr}");
+                    }
                     println!("Exit: {:?}", status.code());
                 }
                 Err(e) => eprintln!("Error: {e}"),
@@ -97,7 +96,9 @@ async fn main() -> anyhow::Result<()> {
         Some(Commands::Ask { query }) => {
             let llm_cfg = config.get_llm_config();
             if !llm_cfg.is_configured() {
-                eprintln!("LLM not configured. Run `command_central setup` or set llm.api_key in config.");
+                eprintln!(
+                    "LLM not configured. Run `command_central setup` or set llm.api_key in config."
+                );
                 eprintln!("Set LLM_API_KEY in .env or config.toml to use the AI agent.");
                 return Ok(());
             }
@@ -122,7 +123,9 @@ async fn main() -> anyhow::Result<()> {
                     eprintln!("done.");
                     println!("{response}");
                 }
-                Err(e) => eprintln!("\nAgent error: {e}\nCheck your LLM_API_KEY and base_url in config."),
+                Err(e) => {
+                    eprintln!("\nAgent error: {e}\nCheck your LLM_API_KEY and base_url in config.")
+                }
             }
         }
         Some(Commands::Tui) => {
@@ -136,7 +139,10 @@ async fn main() -> anyhow::Result<()> {
                 .or_else(|| std::env::var("DISCORD_TOKEN").ok())
                 .expect("Discord token not set. Run `command_central setup` or set discord.token in config.");
 
-            let channel_id: Option<u64> = config.discord.channel_id.clone()
+            let channel_id: Option<u64> = config
+                .discord
+                .channel_id
+                .clone()
                 .or_else(|| std::env::var("DISCORD_CHANNEL_ID").ok())
                 .and_then(|s| s.parse().ok());
 
@@ -225,15 +231,45 @@ async fn run_setup_wizard() -> anyhow::Result<()> {
 
     println!("[1/4] AI Provider");
     println!("  Supported: openai, anthropic, or any OpenAI-compatible API");
-    cfg.llm.provider = Some(read_input(&format!("Provider [{}]: ", cfg.llm.provider.as_deref().unwrap_or("openai")), cfg.llm.provider.clone()));
-    cfg.llm.api_key = Some(read_input(&format!("API key [{}]: ", mask_key(cfg.llm.api_key.as_deref())), cfg.llm.api_key.clone()));
-    cfg.llm.model = Some(read_input(&format!("Model [{}]: ", cfg.llm.model.as_deref().unwrap_or("gpt-4")), cfg.llm.model.clone()));
-    cfg.llm.base_url = Some(read_input(&format!("Base URL [{}]: ", cfg.llm.base_url.as_deref().unwrap_or("https://api.openai.com/v1")), cfg.llm.base_url.clone()));
+    cfg.llm.provider = Some(read_input(
+        &format!(
+            "Provider [{}]: ",
+            cfg.llm.provider.as_deref().unwrap_or("openai")
+        ),
+        cfg.llm.provider.clone(),
+    ));
+    cfg.llm.api_key = Some(read_input(
+        &format!("API key [{}]: ", mask_key(cfg.llm.api_key.as_deref())),
+        cfg.llm.api_key.clone(),
+    ));
+    cfg.llm.model = Some(read_input(
+        &format!("Model [{}]: ", cfg.llm.model.as_deref().unwrap_or("gpt-4")),
+        cfg.llm.model.clone(),
+    ));
+    cfg.llm.base_url = Some(read_input(
+        &format!(
+            "Base URL [{}]: ",
+            cfg.llm
+                .base_url
+                .as_deref()
+                .unwrap_or("https://api.openai.com/v1")
+        ),
+        cfg.llm.base_url.clone(),
+    ));
     println!();
 
     println!("[2/4] Discord Bot");
-    cfg.discord.token = Some(read_input(&format!("Bot token [{}]: ", mask_key(cfg.discord.token.as_deref())), cfg.discord.token.clone()));
-    let cid = read_input(&format!("Channel ID (or empty for all channels) [{}]: ", cfg.discord.channel_id.as_deref().unwrap_or("")), cfg.discord.channel_id.clone());
+    cfg.discord.token = Some(read_input(
+        &format!("Bot token [{}]: ", mask_key(cfg.discord.token.as_deref())),
+        cfg.discord.token.clone(),
+    ));
+    let cid = read_input(
+        &format!(
+            "Channel ID (or empty for all channels) [{}]: ",
+            cfg.discord.channel_id.as_deref().unwrap_or("")
+        ),
+        cfg.discord.channel_id.clone(),
+    );
     if cid.is_empty() {
         cfg.discord.channel_id = None;
     } else {
@@ -242,8 +278,23 @@ async fn run_setup_wizard() -> anyhow::Result<()> {
     println!();
 
     println!("[3/4] Paths");
-    cfg.paths.atomic_repo = Some(read_input(&format!("Atomic repo path [{}]: ", cfg.paths.atomic_repo.as_deref().unwrap_or("~/Atomic")), cfg.paths.atomic_repo.clone()));
-    cfg.paths.opencode_bin = Some(read_input(&format!("Opencode binary [{}]: ", cfg.paths.opencode_bin.as_deref().unwrap_or("~/.opencode/bin/opencode")), cfg.paths.opencode_bin.clone()));
+    cfg.paths.atomic_repo = Some(read_input(
+        &format!(
+            "Atomic repo path [{}]: ",
+            cfg.paths.atomic_repo.as_deref().unwrap_or("~/Atomic")
+        ),
+        cfg.paths.atomic_repo.clone(),
+    ));
+    cfg.paths.opencode_bin = Some(read_input(
+        &format!(
+            "Opencode binary [{}]: ",
+            cfg.paths
+                .opencode_bin
+                .as_deref()
+                .unwrap_or("~/.opencode/bin/opencode")
+        ),
+        cfg.paths.opencode_bin.clone(),
+    ));
     println!();
 
     println!("[4/4] MCP Servers");
@@ -252,13 +303,16 @@ async fn run_setup_wizard() -> anyhow::Result<()> {
     println!("  Empty line to skip.");
     loop {
         let entry = read_input("Add MCP server (or blank to finish): ", None);
-        if entry.trim().is_empty() { break; }
+        if entry.trim().is_empty() {
+            break;
+        }
         let parts: Vec<&str> = entry.splitn(3, '|').collect();
         if parts.len() < 2 {
             println!("  Format: name|command|arg1,arg2");
             continue;
         }
-        let args: Vec<String> = parts.get(2)
+        let args: Vec<String> = parts
+            .get(2)
             .unwrap_or(&"")
             .split(',')
             .filter(|s| !s.is_empty())
@@ -294,7 +348,7 @@ fn read_input(prompt: &str, default: Option<String>) -> String {
 
 fn mask_key(key: Option<&str>) -> String {
     match key {
-        Some(k) if k.len() > 8 => format!("{}...{}", &k[..4], &k[k.len()-4..]),
+        Some(k) if k.len() > 8 => format!("{}...{}", &k[..4], &k[k.len() - 4..]),
         Some(k) => k.to_string(),
         None => "not set".to_string(),
     }

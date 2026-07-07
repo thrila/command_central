@@ -59,8 +59,14 @@ impl Scheduler {
             if let Ok(db) = Database::open(&db_path) {
                 loop {
                     if cancel_clone.load(Ordering::Relaxed) {
-                        if let Ok(task_id) = db.insert_task(&format!("loop:{}:cancelled", &name_clone)) {
-                            let _ = db.update_task_status(task_id, "ok", Some(&format!("Loop `{}` stopped.", &name_clone)));
+                        if let Ok(task_id) =
+                            db.insert_task(&format!("loop:{}:cancelled", &name_clone))
+                        {
+                            let _ = db.update_task_status(
+                                task_id,
+                                "ok",
+                                Some(&format!("Loop `{}` stopped.", &name_clone)),
+                            );
                         }
                         break;
                     }
@@ -86,16 +92,18 @@ impl Scheduler {
 
                     let label = format!("loop:{}", &name_clone);
                     if let Ok(task_id) = db.insert_task(&label) {
-                        let status_str = if output.starts_with("[ok]") { "ok" } else { "failed" };
+                        let status_str = if output.starts_with("[ok]") {
+                            "ok"
+                        } else {
+                            "failed"
+                        };
                         let _ = db.update_task_status(task_id, status_str, Some(&output));
                     }
                 }
             }
         });
 
-        format!(
-            "Loop `{name}` created (ID: {id}) — running `{command}` every {interval_secs}s"
-        )
+        format!("Loop `{name}` created (ID: {id}) — running `{command}` every {interval_secs}s")
     }
 
     pub fn stop_loop(&self, id: u64) -> String {
@@ -125,7 +133,11 @@ impl Scheduler {
         }
         let mut out = String::from("**Active Loops:**\n");
         for (_, (task, cancel)) in tasks.iter() {
-            let active = if cancel.load(Ordering::Relaxed) { "stopping" } else { "running" };
+            let active = if cancel.load(Ordering::Relaxed) {
+                "stopping"
+            } else {
+                "running"
+            };
             out.push_str(&format!(
                 "  [{}] {} ({}) — `{}` every {}s\n",
                 task.id, task.name, active, task.command, task.interval_secs

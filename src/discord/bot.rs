@@ -5,12 +5,12 @@ use crate::core::detector;
 use crate::core::mcp::McpClient;
 use crate::core::monitor;
 use crate::core::task::Task;
-use serenity::{async_trait, prelude::*};
 use serenity::all::{ChannelId, Message};
+use serenity::{async_trait, prelude::*};
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::{mpsc, Mutex};
 use tokio::sync::oneshot;
+use tokio::sync::{mpsc, Mutex};
 
 struct SessionState {
     chat: AgentChat,
@@ -88,12 +88,18 @@ impl EventHandler for Handler {
             } else {
                 "No active agent session.".to_string()
             }
-        } else if content.starts_with("run ") || content.starts_with("sif ")
-            || content.starts_with("nmap ") || content.starts_with("mail ")
-            || content.starts_with("history") || content.starts_with("monitor ")
-            || content.starts_with("loop ") || content.starts_with("workon ")
-            || content.starts_with("cancel ") || content.starts_with("delete ")
-            || content.starts_with("retry ") {
+        } else if content.starts_with("run ")
+            || content.starts_with("sif ")
+            || content.starts_with("nmap ")
+            || content.starts_with("mail ")
+            || content.starts_with("history")
+            || content.starts_with("monitor ")
+            || content.starts_with("loop ")
+            || content.starts_with("workon ")
+            || content.starts_with("cancel ")
+            || content.starts_with("delete ")
+            || content.starts_with("retry ")
+        {
             process_raw_command(&content, &self.tx).await
         } else {
             let mut sessions = self.sessions.lock().await;
@@ -101,16 +107,20 @@ impl EventHandler for Handler {
             if !config.is_configured() {
                 "LLM not configured. Set LLM_API_KEY in .env to use the AI agent, or use `help` for available commands.".to_string()
             } else {
-                let session = sessions.entry(msg.channel_id.get()).or_insert_with(|| {
-                    SessionState {
-                        chat: AgentChat::new(
-                            config.clone(),
-                            self.mcp_clients.clone(),
-                            self.http_client.clone(),
-                            Some(&format!("Discord channel: {}\nUser: {}", msg.channel_id, msg.author.name)),
-                        ),
-                    }
-                });
+                let session =
+                    sessions
+                        .entry(msg.channel_id.get())
+                        .or_insert_with(|| SessionState {
+                            chat: AgentChat::new(
+                                config.clone(),
+                                self.mcp_clients.clone(),
+                                self.http_client.clone(),
+                                Some(&format!(
+                                    "Discord channel: {}\nUser: {}",
+                                    msg.channel_id, msg.author.name
+                                )),
+                            ),
+                        });
                 let channel_msg = format!("[{}]: {}", msg.author.name, content);
                 session.chat.send_message(&channel_msg).await
             }
@@ -169,7 +179,8 @@ async fn handle_discord_config(content: &str) -> String {
                         return "Format: `config mcp add name|command|arg1,arg2`".to_string();
                     }
                     let mut cfg = Config::load();
-                    let args: Vec<String> = spec_parts.get(2)
+                    let args: Vec<String> = spec_parts
+                        .get(2)
                         .unwrap_or(&"")
                         .split(',')
                         .filter(|s| !s.is_empty())
@@ -197,7 +208,9 @@ async fn handle_discord_config(content: &str) -> String {
                 }
                 "remove" => {
                     let name = parts.get(3).unwrap_or(&"");
-                    if name.is_empty() { return "Usage: `config mcp remove <name>`".to_string(); }
+                    if name.is_empty() {
+                        return "Usage: `config mcp remove <name>`".to_string();
+                    }
                     let mut cfg = Config::load();
                     cfg.mcp.servers.retain(|s| s.name != *name);
                     cfg.save().ok();
@@ -246,22 +259,30 @@ async fn process_raw_command(content: &str, tx: &mpsc::Sender<Task>) -> String {
 
     match cmd {
         "run" => {
-            if rest.is_empty() { return "Usage: `run <command>`".to_string(); }
+            if rest.is_empty() {
+                return "Usage: `run <command>`".to_string();
+            }
             let _ = tx.send(Task::Run(rest.to_string())).await;
             format!("Running: `{rest}`")
         }
         "workon" => {
-            if rest.is_empty() { return "Usage: `workon <task>`".to_string(); }
+            if rest.is_empty() {
+                return "Usage: `workon <task>`".to_string();
+            }
             let _ = tx.send(Task::Workon(rest.to_string())).await;
             format!("Opencode spawned: {rest}")
         }
         "sif" => {
-            if rest.is_empty() { return "Usage: `sif <url>`".to_string(); }
+            if rest.is_empty() {
+                return "Usage: `sif <url>`".to_string();
+            }
             let _ = tx.send(Task::Sif(rest.to_string())).await;
             "Queued SIF".to_string()
         }
         "nmap" => {
-            if rest.is_empty() { return "Usage: `nmap <target>`".to_string(); }
+            if rest.is_empty() {
+                return "Usage: `nmap <target>`".to_string();
+            }
             let _ = tx.send(Task::Nmap(rest.to_string())).await;
             "Queued NMAP".to_string()
         }
@@ -269,7 +290,9 @@ async fn process_raw_command(content: &str, tx: &mpsc::Sender<Task>) -> String {
             let mp: Vec<&str> = rest.splitn(2, char::is_whitespace).collect();
             let d = mp.first().unwrap_or(&"");
             let b = mp.get(1).unwrap_or(&"");
-            if d.is_empty() || b.is_empty() { return "Usage: `mail <dest> <body>`".to_string(); }
+            if d.is_empty() || b.is_empty() {
+                return "Usage: `mail <dest> <body>`".to_string();
+            }
             let _ = tx.send(Task::Mail(d.to_string(), b.to_string())).await;
             "Queued mail".to_string()
         }
@@ -280,9 +303,11 @@ async fn process_raw_command(content: &str, tx: &mpsc::Sender<Task>) -> String {
             match r_rx.await {
                 Ok(rows) => {
                     let rows: Vec<_> = rows.into_iter().take(limit as usize).collect();
-                    if rows.is_empty() { "No history.".to_string() }
-                    else {
-                        let log = rows.iter()
+                    if rows.is_empty() {
+                        "No history.".to_string()
+                    } else {
+                        let log = rows
+                            .iter()
                             .map(|(k, s, id)| format!("[{id}] {k} -> {s}"))
                             .collect::<Vec<_>>()
                             .join("\n");
@@ -327,7 +352,9 @@ async fn process_raw_command(content: &str, tx: &mpsc::Sender<Task>) -> String {
             let sub: Vec<&str> = rest.splitn(2, char::is_whitespace).collect();
             let mt = sub.first().unwrap_or(&"");
             let mn = sub.get(1).unwrap_or(&"");
-            if mn.is_empty() { return "Usage: `monitor p <name>` or `monitor s <name>`".to_string(); }
+            if mn.is_empty() {
+                return "Usage: `monitor p <name>` or `monitor s <name>`".to_string();
+            }
             match *mt {
                 "p" | "process" => truncate(&monitor::find_process(mn), 1900),
                 "s" | "service" => truncate(&monitor::monitor_service(mn), 1900),
@@ -340,11 +367,13 @@ async fn process_raw_command(content: &str, tx: &mpsc::Sender<Task>) -> String {
                 return "Usage: `loop <name> = <command> every <secs>`".to_string();
             }
             let interval: u64 = lp.get(4).and_then(|s| s.parse().ok()).unwrap_or(60).max(10);
-            let _ = tx.send(Task::AddLoop {
-                name: lp[0].to_string(),
-                command: lp[2].to_string(),
-                interval_secs: interval,
-            }).await;
+            let _ = tx
+                .send(Task::AddLoop {
+                    name: lp[0].to_string(),
+                    command: lp[2].to_string(),
+                    interval_secs: interval,
+                })
+                .await;
             "Loop created (check `history`)".to_string()
         }
         _ => format!("Unknown: `{cmd}`. Try `help`"),
