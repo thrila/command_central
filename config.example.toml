@@ -1,0 +1,76 @@
+# Command Central Configuration
+# Copy to config.toml and edit, or run: command_central setup
+
+[llm]
+provider = "openai"
+api_key = ""
+model = "gpt-4"
+base_url = "https://api.openai.com/v1"
+
+[discord]
+token = ""
+# channel_id = "123456789"  # Uncomment to restrict to one channel
+
+[paths]
+atomic_repo = "$HOME/Atomic"
+opencode_bin = "$HOME/.opencode/bin/opencode"
+
+# ────────────────────────────────────────────
+# MCP Servers — curated list of useful defaults
+# Format: name|command|arg1,arg2
+# Uncomment and configure what you need
+# ────────────────────────────────────────────
+[mcp]
+servers = [
+  # ── DEVELOPMENT ──
+  # { name = "filesystem", command = "npx", args = ["-y", "@modelcontextprotocol/server-filesystem", "/home/david"] },
+  # { name = "github",     command = "npx", args = ["-y", "@modelcontextprotocol/server-github"] },
+  #   → needs env: GITHUB_TOKEN
+  # { name = "git",        command = "npx", args = ["-y", "@modelcontextprotocol/server-git"] },
+
+  # ── DATABASES ──
+  # { name = "postgres",   command = "npx", args = ["-y", "@modelcontextprotocol/server-postgres", "postgresql://user:pass@localhost/db"] },
+  # { name = "sqlite",     command = "uvx", args = ["mcp-server-sqlite", "--db-path", "/home/david/data.db"] },
+
+  # ── WEB & SEARCH ──
+  # { name = "brave-search",   command = "npx", args = ["-y", "@modelcontextprotocol/server-brave-search"] },
+  #   → needs env: BRAVE_API_KEY (get one free at brave.com/search/api)
+  # { name = "fetch",          command = "npx", args = ["-y", "@modelcontextprotocol/server-fetch"] },
+  # { name = "firecrawl",      command = "npx", args = ["-y", "@modelcontextprotocol/server-firecrawl"] },
+  #   → needs env: FIRECRAWL_API_KEY
+
+  # ── CLOUD & INFRA ──
+  # { name = "cloudflare", command = "npx", args = ["-y", "cloudflare-mcp"] },
+  #   → needs env: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID
+  # { name = "vercel",     command = "npx", args = ["-y", "@vercel/mcp"] },
+  #   → needs env: VERCEL_TOKEN
+  # { name = "docker",     command = "npx", args = ["-y", "@anthropic/mcp-docker"] },
+  # { name = "sentry",     command = "npx", args = ["-y", "mcp-sentry"] },
+  #   → needs env: SENTRY_TOKEN
+
+  # ── PRODUCTIVITY ──
+  # { name = "slack",     command = "npx", args = ["-y", "@modelcontextprotocol/server-slack"] },
+  #   → needs env: SLACK_BOT_TOKEN, SLACK_TEAM_ID
+  # { name = "notion",    command = "npx", args = ["-y", "@modelcontextprotocol/server-notion"] },
+  #   → needs env: NOTION_TOKEN
+  # { name = "gdrive",    command = "npx", args = ["-y", "@modelcontextprotocol/server-gdrive"] },
+  # { name = "gmail",     command = "npx", args = ["-y", "@modelcontextprotocol/server-gmail"] },
+
+  # ── FINANCE & PAYMENTS ──
+  # { name = "stripe",       command = "npx", args = ["-y", "@stripe/mcp"] },
+  #   → needs env: STRIPE_SECRET_KEY
+  # { name = "paystack",     command = "npx", args = ["-y", "mcp-paystack"] },
+  #   → needs env: PAYSTACK_SECRET_KEY
+  # { name = "plaid",        command = "npx", args = ["-y", "mcp-plaid"] },
+  #   → needs env: PLAID_CLIENT_ID, PLAID_SECRET
+
+  # ── COMMUNICATION ──
+  # { name = "telegram",     command = "npx", args = ["-y", "mcp-telegram"] },
+  #   → needs env: TELEGRAM_BOT_TOKEN
+  # { name = "discord-mcp",  command = "npx", args = ["-y", "mcp-discord"] },
+  #   → needs env: DISCORD_BOT_TOKEN
+
+  # ── BROWSER AUTOMATION ──
+  # { name = "playwright",   command = "npx", args = ["-y", "@playwright/mcp"] },
+  #   → headless browser: screenshots, click, type, scrape
+]
